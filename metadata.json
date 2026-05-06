@@ -1,0 +1,6 @@
+{
+  "name": "Cardápio Master & Multi-Tenant Digital",
+  "description": "Sistema completo de gestão de cardápios digitais com área mestra administrativa, financeira centralizada, gestão de empresas individuais e área pública de pedidos via WhatsApp.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
