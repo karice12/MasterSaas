@@ -81,6 +81,7 @@ CREATE TABLE IF NOT EXISTS products (
     price DECIMAL(10,2) NOT NULL,
     image_url TEXT,
     is_active BOOLEAN DEFAULT true,
+    is_featured BOOLEAN DEFAULT false,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

@@ -9,25 +9,36 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Middleware para Resolução de Tenancy via Subdomínio
+const tenantMiddleware = (req, res, next) => {
+  const host = req.headers.host || "";
+  const parts = host.split(".");
+  
+  // Ignorar subdomínios técnicos
+  const ignored = ["www", "admin", "dev", "master", "api", "localhost"];
+  
+  if (parts.length >= 3) {
+    const subdomain = parts[0].toLowerCase();
+    if (!ignored.includes(subdomain)) {
+      req.tenantSlug = subdomain;
+      console.log(`[Tenancy] Resolvido para: ${subdomain}`);
+    }
+  }
+  next();
+};
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
   app.use(express.json());
+  app.use(tenantMiddleware);
 
-  // 1. API: Simulação de Verificação de Host (Subdomínios)
-  // No frontend, você usaria window.location.hostname para extrair o slug
-  app.get("/api/tenant-info", (req, res) => {
-    const host = req.headers.host || "";
-    // Exemplo simplificado: local-test.seudominio.com.br
-    const subdomain = host.split(".")[0];
-    
-    // Aqui você faria a query no Supabase: 
-    // select id, name, status from companies where slug = subdomain
-    
+  // 1. API: Tenant Info
+  app.get("/api/tenant-info", (req: any, res) => {
     res.json({ 
-      slug: subdomain,
-      is_subdomain: subdomain !== "localhost" && subdomain !== "3000"
+      slug: req.tenantSlug || null,
+      is_tenant_path: !!req.tenantSlug
     });
   });
 

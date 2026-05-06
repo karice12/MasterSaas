@@ -122,7 +122,7 @@ export default function MenuManagement() {
   return (
     <div className="space-y-6 pb-20">
       {/* Sub Navigation */}
-      <div className="flex gap-1 bg-dark-card p-1.5 rounded-xl border border-dark-border w-full max-w-lg shadow-xl overflow-hidden">
+      <div className="flex gap-1 bg-white/5 backdrop-blur-md p-1 rounded border border-white/5 w-full max-w-sm shadow-2xl overflow-hidden">
         <SubNavItem 
           active={activeSubTab === 'categories'} 
           onClick={() => setActiveSubTab('categories')} 
@@ -152,7 +152,7 @@ export default function MenuManagement() {
             exit={{ opacity: 0, y: -10 }}
             className="space-y-6"
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <AddCard 
                 label="Nova Categoria" 
                 onClick={() => {
@@ -162,10 +162,10 @@ export default function MenuManagement() {
                 }} 
               />
               {loading && categories.length === 0 ? (
-                <div className="col-span-full py-20 text-center text-slate-500 font-bold uppercase tracking-widest text-[9px]">
+                <div className="col-span-full py-20 text-center text-slate-500 font-bold uppercase tracking-widest text-[8px]">
                   <div className="flex flex-col items-center gap-4">
-                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                    Buscando categorias...
+                    <div className="w-6 h-6 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
+                    Sincronizando banco...
                   </div>
                 </div>
               ) : categories.map(cat => (
@@ -267,47 +267,48 @@ function SubNavItem({ active, onClick, label, icon }: { active: boolean, onClick
   return (
     <button 
       onClick={onClick}
-      className={`flex-1 px-3 py-2 rounded-lg flex items-center justify-center gap-2 text-[9px] font-bold uppercase tracking-widest transition-all ${
-        active ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-500 hover:text-white hover:bg-dark-bg'
+      className={`flex-1 px-3 py-1.5 rounded flex items-center justify-center gap-2 text-[8px] font-bold uppercase tracking-widest transition-all ${
+        active ? 'bg-amber-600 text-white shadow shadow-amber-900/20' : 'text-slate-500 hover:text-white hover:bg-white/5'
       }`}
     >
       {icon}
-      <span className="hidden sm:inline">{label}</span>
+      <span className="hidden md:inline">{label}</span>
     </button>
   );
 }
 
 function CategoryCard({ name, itemsCount, onEdit, onDelete }: { name: string, itemsCount: number, onEdit: () => void, onDelete: () => void }) {
   return (
-    <div className="bg-dark-card p-6 rounded-xl border border-dark-border flex items-center justify-between group hover:border-primary/30 transition-all shadow-xl">
-      <div className="flex items-center gap-4">
-        <div className="w-12 h-12 bg-dark-bg border border-dark-border text-primary rounded-lg flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
-          <Layers size={20} />
+    <div className="bg-gray-900 p-4 rounded border border-white/5 flex flex-col justify-between group hover:border-amber-500/20 transition-all shadow-sm relative overflow-hidden">
+      <div className="flex items-start justify-between">
+        <div className="w-8 h-8 bg-gray-800 border border-white/5 text-amber-500/70 rounded flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
+          <Layers size={14} />
         </div>
-        <div>
-          <h4 className="font-bold text-white text-xs tracking-tight italic uppercase">{name}</h4>
-          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">{itemsCount} produtos</p>
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+          <button onClick={onEdit} className="p-1.5 bg-gray-800 border border-white/5 rounded text-slate-500 hover:text-amber-500 transition-colors">
+            <Edit3 size={12} />
+          </button>
+          <button onClick={onDelete} className="p-1.5 bg-gray-800 border border-white/5 rounded text-slate-500 hover:text-red-400 transition-colors">
+            <Trash2 size={12} />
+          </button>
         </div>
       </div>
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-        <button onClick={onEdit} className="p-2 text-slate-400 hover:text-primary transition-colors">
-          <Edit3 size={16} />
-        </button>
-        <button onClick={onDelete} className="p-2 text-slate-400 hover:text-red-400 transition-colors">
-          <Trash2 size={16} />
-        </button>
+      <div className="mt-4">
+        <h4 className="font-bold text-white text-[10px] tracking-widest italic uppercase">{name}</h4>
+        <p className="text-[7px] text-slate-600 font-bold uppercase tracking-widest mt-1 italic">{itemsCount} produtos ativos</p>
       </div>
+      <div className="absolute top-0 right-0 w-24 h-24 bg-amber-600/5 blur-3xl pointer-events-none rounded-full -mr-12 -mt-12" />
     </div>
   );
 }
 
 function AddCard({ label, onClick }: { label: string, onClick: () => void }) {
   return (
-    <button onClick={onClick} className="border-2 border-dashed border-dark-border bg-dark-card/30 rounded-xl p-6 flex flex-col items-center justify-center gap-3 text-slate-600 hover:border-primary/50 hover:text-primary transition-all group shadow-inner">
-      <div className="w-12 h-12 bg-dark-bg border border-dark-border rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform shadow-xl group-hover:text-primary">
-         <Plus size={24} />
+    <button onClick={onClick} className="border border-dashed border-white/10 bg-white/[0.02] rounded p-4 flex flex-col items-center justify-center gap-3 text-slate-600 hover:border-amber-500/30 hover:text-amber-500 hover:bg-amber-600/5 transition-all group shadow-inner min-h-[100px]">
+      <div className="w-8 h-8 bg-gray-900 border border-white/10 rounded flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg group-hover:text-amber-500">
+         <Plus size={18} />
       </div>
-      <span className="text-[9px] font-bold uppercase tracking-[0.2em] mt-1">{label}</span>
+      <span className="text-[8px] font-bold uppercase tracking-widest opacity-60 group-hover:opacity-100">{label}</span>
     </button>
   );
 }

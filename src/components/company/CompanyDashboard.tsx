@@ -10,7 +10,8 @@ import {
   ExternalLink,
   ChevronRight,
   Lock,
-  AlertCircle
+  AlertCircle,
+  Settings
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import FinancialPanel from './FinancialPanel';
@@ -29,17 +30,17 @@ export default function CompanyDashboard() {
   }
 
   return (
-    <div className="flex min-h-screen bg-dark-bg font-sans text-slate-200 overflow-hidden">
+    <div className="flex h-screen bg-gray-950 font-sans text-slate-300 overflow-hidden">
       {/* Mobile Top Bar */}
-      <div className="lg:hidden flex items-center justify-between p-4 bg-dark-card border-b border-dark-border absolute top-0 left-0 right-0 z-[60]">
+      <div className="lg:hidden flex items-center justify-between p-4 bg-gray-900 border-b border-white/5 absolute top-0 left-0 right-0 z-[60]">
          <div className="flex items-center gap-2">
-            <div className="bg-primary p-2 rounded-lg text-white">
-              <Store size={18} />
+            <div className="bg-amber-600 p-1.5 rounded text-white shadow-lg shadow-amber-900/20">
+              <Store size={16} />
             </div>
-            <span className="font-bold text-sm tracking-tighter text-white uppercase italic">MENU<span className="text-primary font-light">MASTER</span></span>
+            <span className="font-bold text-[10px] tracking-widest text-white uppercase italic">MENU<span className="text-amber-500 font-light">MASTER</span></span>
          </div>
-         <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-dark-bg rounded-lg text-slate-400">
-            {isSidebarOpen ? <X size={20} /> : <MenuIcon size={20} />}
+         <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/5 rounded text-slate-500">
+            {isSidebarOpen ? <X size={18} /> : <MenuIcon size={18} />}
          </button>
       </div>
 
@@ -59,58 +60,58 @@ export default function CompanyDashboard() {
       {/* Sidebar */}
       <aside 
         className={`
-          fixed inset-y-0 left-0 w-64 bg-dark-card border-r border-dark-border z-[80] transition-transform duration-300 lg:static lg:translate-x-0
+          fixed inset-y-0 left-0 w-56 bg-gray-900 border-r border-white/5 z-[80] transition-transform duration-300 lg:static lg:translate-x-0 shadow-2xl
           ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
         <div className="h-full flex flex-col">
-          <div className="p-6">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                <Store size={20} />
+          <div className="p-5">
+            <div className="flex items-center gap-2.5 mb-8">
+              <div className="w-7 h-7 bg-amber-600 rounded flex items-center justify-center text-white shadow-lg shadow-amber-900/40">
+                <Store size={16} />
               </div>
               <div>
-                <h2 className="font-bold text-sm text-white leading-none tracking-tight italic uppercase">MINHA<span className="text-primary font-light">LOJA</span></h2>
-                <p className="text-[9px] text-primary font-bold uppercase tracking-[0.2em] mt-1 italic">Painel Gerencial</p>
+                <h2 className="font-bold text-[10px] text-white leading-none tracking-widest italic uppercase">MENU<span className="text-amber-500 font-light">MASTER</span></h2>
+                <p className="text-[7px] text-amber-500/60 font-bold uppercase tracking-[0.2em] mt-1 italic">Company Cluster</p>
               </div>
             </div>
 
-            <nav className="space-y-1.5">
+            <nav className="space-y-1">
               <CompanyNavItem 
                 active={activeTab === 'dashboard'} 
                 onClick={() => setActiveTab('dashboard')}
-                icon={<LayoutDashboard size={18} />}
+                icon={<LayoutDashboard size={14} />}
                 label="Visão Geral"
               />
               <CompanyNavItem 
                 active={activeTab === 'menu'} 
                 onClick={() => setActiveTab('menu')}
-                icon={<ShoppingBag size={18} />}
+                icon={<ShoppingBag size={14} />}
                 label="Cardápio"
               />
               <CompanyNavItem 
                 active={activeTab === 'settings'} 
                 onClick={() => setActiveTab('settings')}
-                icon={<Store size={18} />}
-                label="Dados da Loja"
+                icon={<Settings size={14} />}
+                label="Configurações"
               />
             </nav>
           </div>
 
-          <div className="mt-auto p-4 border-t border-dark-border/50">
-             <div className="bg-dark-bg/40 p-4 rounded-xl mb-4 flex flex-col gap-2 border border-dark-border/50 group cursor-pointer hover:border-primary/30 transition-all">
-                <div className="flex justify-between items-center text-primary">
-                   <p className="text-[9px] font-bold uppercase tracking-[0.2em]">Link Público</p>
-                   <ExternalLink size={12} />
+          <div className="mt-auto p-4 border-t border-white/5 bg-black/10">
+             <div className="bg-gray-800/40 p-3 rounded mb-4 flex flex-col gap-2 border border-white/5 group cursor-pointer hover:border-amber-500/20 transition-all">
+                <div className="flex justify-between items-center text-amber-500/70">
+                   <p className="text-[7px] font-bold uppercase tracking-[0.2em]">Link Público</p>
+                   <ExternalLink size={10} />
                 </div>
                 <div className="flex items-center justify-between">
-                   <p className="text-[11px] font-bold text-white overflow-hidden text-ellipsis whitespace-nowrap">burguerchef.link</p>
-                   <ChevronRight size={12} className="text-slate-600 group-hover:translate-x-1 transition-transform" />
+                   <p className="text-[10px] font-bold text-white overflow-hidden text-ellipsis whitespace-nowrap opacity-60">burguerchef.link</p>
+                   <ChevronRight size={10} className="text-slate-700 group-hover:translate-x-1 transition-transform" />
                 </div>
              </div>
              
-             <button className="flex items-center gap-3 w-full p-3.5 text-slate-500 hover:text-red-400 hover:bg-red-500/5 rounded-xl transition-all font-bold text-[9px] uppercase tracking-[0.2em]">
-                <LogOut size={18} />
+             <button className="flex items-center gap-3 w-full p-2.5 text-slate-500 hover:text-red-400 hover:bg-red-500/5 rounded transition-all font-bold text-[8px] uppercase tracking-widest">
+                <LogOut size={14} />
                 Encerrar Sessão
              </button>
           </div>
@@ -118,27 +119,25 @@ export default function CompanyDashboard() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 w-full overflow-y-auto pt-20 lg:pt-0 no-scrollbar">
-        <header className="h-20 px-4 lg:px-10 flex items-center justify-between sticky top-0 bg-dark-bg/80 backdrop-blur-xl z-40 border-b border-dark-border/30">
+      <main className="flex-1 w-full overflow-y-auto pt-14 lg:pt-0 no-scrollbar">
+        <header className="h-14 px-6 lg:px-10 flex items-center justify-between sticky top-0 bg-gray-950/80 backdrop-blur-xl z-40 border-b border-white/5">
            <div className="flex flex-col">
-              <h1 className="text-lg font-bold text-white tracking-tight uppercase italic">
-                 {activeTab === 'dashboard' && 'Bom trabalho, João! 👋'}
-                 {activeTab === 'menu' && 'Gestão de Cardápio'}
-                 {activeTab === 'settings' && 'Personalização'}
+              <h1 className="text-xs font-bold text-white tracking-widest uppercase italic">
+                 {activeTab === 'dashboard' && 'Visão Geral Operacional'}
+                 {activeTab === 'menu' && 'Catálogo de Produtos'}
+                 {activeTab === 'settings' && 'Identidade Visual & Info'}
               </h1>
-              <p className="text-xs text-slate-500 font-bold italic">
-                 {activeTab === 'dashboard' && 'Aqui estão as métricas da sua loja hoje.'}
-                 {activeTab === 'menu' && 'Organize categorias, produtos e preços.'}
-                 {activeTab === 'settings' && 'Mantenha seus dados sempre atualizados.'}
+              <p className="text-[8px] text-slate-600 font-bold uppercase tracking-widest mt-0.5">
+                 Cluster: Sampa-East-01 • Status: Online
               </p>
            </div>
            <div className="flex items-center gap-6">
-              <div className="hidden sm:flex items-center gap-2 bg-emerald-400/10 text-emerald-400 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] border border-emerald-400/20">
-                 <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
-                 Ativa
+              <div className="hidden sm:flex items-center gap-2 bg-emerald-500/5 text-emerald-500 px-3 py-1 rounded border border-emerald-500/10 text-[8px] font-bold uppercase tracking-widest">
+                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                 Loja Aberta
               </div>
-              <div className="w-10 h-10 rounded-xl border border-dark-border bg-dark-card p-0.5 shadow-xl flex items-center justify-center text-primary">
-                 <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=John" alt="Avatar" className="w-full h-full rounded-lg bg-dark-bg" />
+              <div className="w-8 h-8 rounded border border-white/10 bg-gray-900 p-0.5 shadow-xl flex items-center justify-center text-amber-500 shadow-inner">
+                 <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=John" alt="Avatar" className="w-full h-full rounded opacity-80" />
               </div>
            </div>
         </header>
@@ -172,18 +171,18 @@ function CompanyNavItem({ active, onClick, icon, label }: { active: boolean, onC
     <button 
       onClick={onClick}
       className={`
-        flex items-center gap-3.5 w-full p-3.5 rounded-xl transition-all duration-300 group relative
-        ${active ? 'bg-primary text-white shadow-xl shadow-primary/20' : 'text-slate-500 hover:text-white hover:bg-dark-bg'}
+        flex items-center gap-3 w-full p-2.5 rounded transition-all duration-300 group relative
+        ${active ? 'bg-amber-600 text-white shadow shadow-amber-900/20' : 'text-slate-500 hover:text-white hover:bg-white/5'}
       `}
     >
-      <span className={`${active ? 'scale-110' : 'group-hover:scale-110'} transition-transform`}>
+      <span className={`${active ? 'scale-105' : 'group-hover:scale-105'} transition-transform shrink-0`}>
         {icon}
       </span>
-      <span className="font-bold text-xs uppercase tracking-tight">{label}</span>
+      <span className="font-bold text-[9px] uppercase tracking-widest">{label}</span>
       {active && (
         <motion.div 
           layoutId="company-nav-glow" 
-          className="absolute left-0 w-0.5 h-4 bg-white rounded-r-full shadow-[0_0_8px_rgba(255,255,255,0.8)]" 
+          className="absolute left-0 w-0.5 h-3 bg-white rounded-r-full" 
         />
       )}
     </button>

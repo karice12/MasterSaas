@@ -22,25 +22,26 @@ import { supabase } from '../../lib/supabase';
 
 interface Company {
   id: string;
-  nome: string;
+  name: string;
   slug: string;
   whatsapp: string;
   status: 'active' | 'blocked' | 'expired';
+  menu_visibility: 'online' | 'offline';
 }
 
 interface Category {
   id: string;
-  nome: string;
-  ordem: number;
+  name: string;
+  display_order: number;
 }
 
 interface Product {
   id: string;
-  nome: string;
-  descricao: string;
-  preco: number;
-  imagem_url: string;
-  categoria_id: string;
+  name: string;
+  description: string;
+  price: number;
+  image_url: string;
+  category_id: string;
   is_featured: boolean;
 }
 
@@ -49,8 +50,9 @@ interface CartItem {
   quantity: number;
 }
 
-export default function PublicMenu() {
-  const { slug } = useParams();
+export default function PublicMenu({ overrideSlug }: { overrideSlug?: string }) {
+  const { slug: paramSlug } = useParams();
+  const slug = overrideSlug || paramSlug;
   const navigate = useNavigate();
   const [company, setCompany] = useState<Company | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -69,7 +71,7 @@ export default function PublicMenu() {
     try {
       // 1. Fetch Company
       const { data: compData, error: compErr } = await supabase
-        .from('empresas')
+        .from('companies')
         .select('*')
         .eq('slug', slug)
         .single();
@@ -82,8 +84,8 @@ export default function PublicMenu() {
 
       // 2. Fetch Categories and Products
       const [catRes, prodRes] = await Promise.all([
-        supabase.from('categorias').select('*').eq('empresa_id', compData.id).order('ordem'),
-        supabase.from('produtos').select('*').eq('empresa_id', compData.id).eq('status', 'ativo')
+        supabase.from('categories').select('*').eq('company_id', compData.id).order('display_order'),
+        supabase.from('products').select('*').eq('company_id', compData.id).eq('is_active', true)
       ]);
 
       if (catRes.error) throw catRes.error;
@@ -123,12 +125,12 @@ export default function PublicMenu() {
   };
 
   const cartTotal = useMemo(() => {
-    return cart.reduce((sum, item) => sum + (item.product.preco * item.quantity), 0);
+    return cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
   }, [cart]);
 
   const handleCheckout = () => {
     if (!company) return;
-    const itemsText = cart.map(item => `${item.quantity}x ${item.product.nome}`).join(', ');
+    const itemsText = cart.map(item => `${item.quantity}x ${item.product.name}`).join(', ');
     const totalFormatted = cartTotal.toFixed(2).replace('.', ',');
     const message = `Olá! Gostaria de fazer um pedido:\n\n*Itens:* ${itemsText}\n\n*Total:* R$ ${totalFormatted}\n\nPor favor, confirmem o recebimento!`;
     const whatsappUrl = `https://api.whatsapp.com/send?phone=${company.whatsapp.replace(/\D/g, '')}&text=${encodeURIComponent(message)}`;
@@ -137,29 +139,31 @@ export default function PublicMenu() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-dark-bg flex flex-col items-center justify-center p-6 text-center">
-        <Loader2 className="animate-spin text-primary mb-4" size={48} />
-        <p className="text-slate-400 font-bold uppercase tracking-widest text-xs animate-pulse">Consultando Cozinha...</p>
+      <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-6 text-center">
+        <Loader2 className="animate-spin text-amber-500 mb-4" size={40} />
+        <p className="text-slate-500 font-bold uppercase tracking-widest text-[8px] animate-pulse">Sincronizando Nodes...</p>
       </div>
     );
   }
 
-  if (!company || company.status !== 'active') {
+  // Critical Business Rule: Both status active and menu online
+  if (!company || company.status !== 'active' || company.menu_visibility !== 'online') {
     return (
-      <div className="min-h-screen bg-dark-bg flex flex-col items-center justify-center p-10 text-center">
-        <div className="bg-dark-card p-10 rounded-[40px] border border-dark-border shadow-2xl max-w-sm">
-           <div className="mb-6 mx-auto w-20 h-20 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center text-red-500">
-              <Lock size={40} />
+      <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-10 text-center">
+        <div className="bg-gray-900 p-10 rounded border border-white/5 shadow-2xl max-w-sm relative overflow-hidden">
+           <div className="absolute top-0 left-0 w-full h-1 bg-amber-600/20" />
+           <div className="mb-8 mx-auto w-16 h-16 bg-red-500/5 border border-red-500/10 rounded flex items-center justify-center text-red-500">
+              <Lock size={32} />
            </div>
-           <h1 className="text-xl font-bold text-white uppercase italic tracking-tight mb-4">Loja Temporariamente <span className="text-primary">Indisponível</span></h1>
-           <p className="text-sm text-slate-500 font-medium italic mb-8 leading-relaxed">
-             Este estabelecimento não está aceitando pedidos online no momento. Entre em contato diretamente.
+           <h1 className="text-lg font-bold text-white uppercase italic tracking-widest mb-4">Acesso <span className="text-red-500">Restrito</span></h1>
+           <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-8 leading-relaxed opacity-60">
+             O cardápio deste estabelecimento encontra-se indisponível ou em manutenção preventiva.
            </p>
            <button 
             onClick={() => navigate('/')}
-            className="w-full bg-white text-dark-bg py-4 rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-3"
+            className="w-full bg-gray-800 border border-white/5 text-white py-3 rounded font-bold text-[9px] uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-gray-700 transition-all"
            >
-             <ArrowLeft size={18} /> Voltar ao Início
+             <ArrowLeft size={16} /> Voltar ao Início
            </button>
         </div>
       </div>
@@ -169,78 +173,73 @@ export default function PublicMenu() {
   const featuredProducts = products.filter(p => p.is_featured);
 
   return (
-    <div className="min-h-screen bg-dark-bg text-slate-200 font-sans pb-32">
+    <div className="min-h-screen bg-gray-950 text-slate-300 font-sans pb-32">
       {/* Header Profile */}
-      <div className="bg-dark-card border-b border-dark-border sticky top-0 z-50">
-        <div className="max-w-3xl mx-auto p-6 flex items-center gap-6">
-          <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
-             <Utensils size={32} />
+      <div className="bg-gray-900 border-b border-white/5 sticky top-0 z-50 backdrop-blur-md bg-opacity-80">
+        <div className="max-w-xl mx-auto p-5 flex items-center gap-4">
+          <div className="w-12 h-12 bg-amber-600 rounded flex items-center justify-center text-white shadow-lg shadow-amber-900/40">
+             <ChefHat size={24} />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white uppercase italic tracking-tight">{company.nome}</h1>
+            <h1 className="text-sm font-bold text-white uppercase italic tracking-widest">{company.name}</h1>
             <div className="flex items-center gap-3 mt-1">
-               <span className="flex items-center gap-1 text-[9px] font-bold text-emerald-400 uppercase bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20">
-                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Aberto
+               <span className="flex items-center gap-1.5 text-[8px] font-bold text-emerald-500 uppercase bg-emerald-500/5 px-2 py-0.5 rounded border border-emerald-500/10">
+                 <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" /> Operacional
                </span>
-               <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-1">
-                 <Clock size={10} /> 30-45 min
+               <span className="text-[8px] text-slate-600 font-bold uppercase tracking-widest flex items-center gap-1 opacity-60">
+                 <Clock size={10} /> 25-40 MIN
                </span>
             </div>
           </div>
         </div>
 
         {/* Categories Navbar */}
-        <div className="max-w-3xl mx-auto px-6 pb-4 overflow-x-auto no-scrollbar flex items-center gap-3">
+        <div className="max-w-xl mx-auto px-5 pb-4 overflow-x-auto no-scrollbar flex items-center gap-2">
           {categories.map(cat => (
             <button 
               key={cat.id}
               onClick={() => {
                 setActiveCategory(cat.id);
-                document.getElementById(`category-${cat.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                document.getElementById(`category-${cat.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
               }}
               className={`
-                whitespace-nowrap px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all border
-                ${activeCategory === cat.id ? 'bg-primary text-white border-primary shadow-lg shadow-primary/10' : 'bg-dark-bg text-slate-500 border-dark-border hover:text-white'}
+                whitespace-nowrap px-4 py-1.5 rounded text-[9px] font-bold uppercase tracking-widest transition-all
+                ${activeCategory === cat.id ? 'bg-amber-600 text-white shadow shadow-amber-900/20' : 'bg-gray-800 text-slate-500 border border-white/5 hover:text-white'}
               `}
             >
-              {cat.nome}
+              {cat.name}
             </button>
           ))}
         </div>
       </div>
 
-      <main className="max-w-3xl mx-auto p-6 space-y-10">
+      <main className="max-w-xl mx-auto p-5 space-y-12">
         {/* Featured Section */}
         {featuredProducts.length > 0 && (
           <div>
-            <h2 className="flex items-center gap-2 text-sm font-bold text-white uppercase italic tracking-tight mb-6">
-              <Star size={18} className="text-amber-400 fill-amber-400" /> Destaques Incríveis
+            <h2 className="flex items-center gap-2 text-[10px] font-bold text-white uppercase italic tracking-widest mb-6 opacity-80">
+              <Star size={14} className="text-amber-500 fill-amber-500" /> Seleção Premium
             </h2>
             <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
                {featuredProducts.map(product => (
                  <motion.div 
                    key={product.id} 
-                   whileTap={{ scale: 0.95 }}
+                   whileTap={{ scale: 0.98 }}
                    onClick={() => addToCart(product)}
-                   className="min-w-[280px] bg-dark-card rounded-[32px] border border-dark-border p-4 shadow-xl relative overflow-hidden group cursor-pointer"
+                   className="min-w-[240px] bg-gray-900 rounded border border-white/5 p-4 shadow-sm relative overflow-hidden group cursor-pointer"
                  >
-                   <div className="aspect-video bg-dark-bg rounded-2xl mb-4 overflow-hidden relative">
-                      {product.imagem_url ? (
-                        <img src={product.imagem_url} alt={product.nome} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" referrerPolicy="no-referrer" />
+                   <div className="aspect-[4/3] bg-gray-800 rounded mb-4 overflow-hidden relative">
+                      {product.image_url ? (
+                        <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" referrerPolicy="no-referrer" />
                       ) : (
-                        <ChefHat size={32} className="text-slate-800 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                        <Utensils size={24} className="text-slate-800 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
                       )}
-                      <div className="absolute bottom-2 right-2 bg-dark-card/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-dark-border text-white font-bold text-xs shadow-xl">
-                        R$ {product.preco.toFixed(2).replace('.', ',')}
+                      <div className="absolute top-2 right-2 bg-gray-950/80 backdrop-blur-md px-2 py-1 rounded border border-white/5 text-amber-500 font-bold text-[10px]">
+                        R$ {product.price.toFixed(2).replace('.', ',')}
                       </div>
                    </div>
-                   <h3 className="font-bold text-white text-sm uppercase italic mb-1 truncate">{product.nome}</h3>
-                   <p className="text-[10px] text-slate-500 line-clamp-2 italic font-medium">{product.descricao}</p>
-                   <div className="mt-4 flex justify-center">
-                      <div className="bg-primary/10 text-primary p-2 rounded-xl border border-primary/20 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Plus size={20} />
-                      </div>
-                   </div>
+                   <h3 className="font-bold text-white text-[11px] uppercase italic mb-1 truncate tracking-tight">{product.name}</h3>
+                   <p className="text-[9px] text-slate-600 line-clamp-2 italic font-medium leading-relaxed">{product.description}</p>
                  </motion.div>
                ))}
             </div>
@@ -249,31 +248,33 @@ export default function PublicMenu() {
 
         {/* Regular Categories */}
         {categories.map(cat => (
-          <div key={cat.id} id={`category-${cat.id}`} className="space-y-6 pt-4">
-             <h2 className="text-base font-bold text-white uppercase italic tracking-tighter border-l-4 border-primary pl-4">{cat.nome}</h2>
+          <div key={cat.id} id={`category-${cat.id}`} className="space-y-6">
+             <h2 className="text-[11px] font-bold text-white uppercase italic tracking-widest border-l-2 border-amber-600 pl-4">{cat.name}</h2>
              <div className="grid grid-cols-1 gap-4">
-                {products.filter(p => p.categoria_id === cat.id).map(product => (
+                {products.filter(p => p.category_id === cat.id).map(product => (
                   <motion.div 
                     key={product.id}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => addToCart(product)}
-                    className="bg-dark-card p-4 rounded-2xl border border-dark-border flex gap-4 cursor-pointer hover:border-primary/20 transition-all group"
+                    className="bg-gray-900 p-4 rounded border border-white/5 flex gap-4 cursor-pointer hover:border-amber-500/20 transition-all group"
                   >
-                    <div className="w-24 h-24 bg-dark-bg rounded-xl shrink-0 overflow-hidden relative">
-                      {product.imagem_url ? (
-                        <img src={product.imagem_url} alt={product.nome} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" referrerPolicy="no-referrer" />
+                    <div className="w-20 h-20 bg-gray-800 rounded shrink-0 overflow-hidden relative">
+                      {product.image_url ? (
+                        <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" referrerPolicy="no-referrer" />
                       ) : (
-                        <Utensils size={24} className="text-slate-800 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                        <Utensils size={20} className="text-slate-800 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
                       )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                       <h3 className="font-bold text-white text-sm tracking-tight mb-1 uppercase italic">{product.nome}</h3>
-                       <p className="text-[10px] text-slate-500 line-clamp-2 italic font-medium leading-relaxed">{product.descricao}</p>
-                       <div className="mt-3 flex items-center justify-between">
-                          <span className="text-primary font-bold text-sm tracking-tighter">R$ {product.preco.toFixed(2).replace('.', ',')}</span>
-                          <button className="bg-dark-bg border border-dark-border p-2 rounded-lg text-slate-400 group-hover:text-primary transition-colors">
-                            <Plus size={16} />
-                          </button>
+                    <div className="flex-1 min-w-0 flex flex-col justify-between">
+                       <div>
+                          <h3 className="font-bold text-white text-[11px] tracking-tight mb-1 uppercase italic">{product.name}</h3>
+                          <p className="text-[9px] text-slate-600 line-clamp-2 italic font-medium leading-relaxed">{product.description}</p>
+                       </div>
+                       <div className="mt-auto pt-3 flex items-center justify-between">
+                          <span className="text-amber-500 font-bold text-[11px]">R$ {product.price.toFixed(2).replace('.', ',')}</span>
+                          <div className="w-6 h-6 bg-gray-800 border border-white/5 rounded flex items-center justify-center text-slate-500 group-hover:text-amber-500 transition-colors">
+                            <Plus size={14} />
+                          </div>
                        </div>
                     </div>
                   </motion.div>
@@ -291,19 +292,19 @@ export default function PublicMenu() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
             onClick={() => setIsCartOpen(true)}
-            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] bg-primary text-white p-6 rounded-[32px] shadow-2xl flex items-center gap-6 min-w-[280px] shadow-primary/30 active:scale-95 transition-transform"
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] bg-amber-600 text-white p-4 rounded border border-amber-500 shadow-2xl flex items-center gap-6 min-w-[280px] shadow-amber-900/20 active:scale-95 transition-transform"
           >
             <div className="relative">
-              <ShoppingBag size={24} />
-              <span className="absolute -top-2 -right-2 bg-white text-primary text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-primary">
+              <ShoppingBag size={20} />
+              <span className="absolute -top-2 -right-2 bg-white text-amber-600 text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-amber-600">
                 {cart.reduce((s, i) => s + i.quantity, 0)}
               </span>
             </div>
             <div className="flex-1 text-left">
-               <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">Ver Pedido</p>
-               <p className="text-base font-bold tracking-tighter">R$ {cartTotal.toFixed(2).replace('.', ',')}</p>
+               <p className="text-[8px] font-bold uppercase tracking-widest opacity-80 italic">Confirmar Seleção</p>
+               <p className="text-sm font-bold tracking-tight italic">R$ {cartTotal.toFixed(2).replace('.', ',')}</p>
             </div>
-            <ChevronRight size={24} />
+            <ChevronRight size={20} />
           </motion.button>
         )}
       </AnimatePresence>
@@ -312,45 +313,48 @@ export default function PublicMenu() {
       <AnimatePresence>
         {isCartOpen && (
           <div className="fixed inset-0 z-[100] flex justify-end">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsCartOpen(false)} className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-[110]" />
-            <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} className="bg-dark-card w-full max-w-md h-full shadow-2xl border-l border-dark-border flex flex-col pt-safe z-[120]">
-              <div className="p-8 border-b border-dark-border flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="bg-primary/10 p-3 rounded-xl text-primary"><ShoppingBag size={24} /></div>
-                  <h2 className="text-xl font-bold text-white uppercase italic tracking-tight">Meus <span className="text-primary font-light">Itens</span></h2>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsCartOpen(false)} className="absolute inset-0 bg-black/90 backdrop-blur-sm z-[110]" />
+            <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} className="bg-gray-900 w-full max-w-sm h-full shadow-2xl border-l border-white/5 flex flex-col z-[120]">
+              <div className="p-6 border-b border-white/5 flex items-center justify-between bg-black/10">
+                <div className="flex items-center gap-3">
+                  <div className="bg-amber-600/10 p-2 rounded text-amber-500 border border-amber-600/10"><ShoppingBag size={20} /></div>
+                  <div>
+                     <h2 className="text-xs font-bold text-white uppercase italic tracking-widest">Pedido <span className="text-amber-500 font-light">Sincronizado</span></h2>
+                     <p className="text-[8px] text-slate-600 font-bold uppercase tracking-widest italic">Análise de itens selecionados</p>
+                  </div>
                 </div>
-                <button onClick={() => setIsCartOpen(false)} className="text-slate-500 hover:text-white p-2 bg-dark-bg rounded-xl border border-dark-border"><X size={24} /></button>
+                <button onClick={() => setIsCartOpen(false)} className="text-slate-500 hover:text-white p-1.5 bg-gray-800 rounded border border-white/5"><X size={18} /></button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-8 space-y-6 no-scrollbar">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
                 {cart.map(item => (
-                  <div key={item.product.id} className="flex gap-4 p-4 bg-dark-bg/40 rounded-[28px] border border-dark-border/50">
-                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-dark-bg shrink-0">
-                       <img src={item.product.imagem_url} alt={item.product.nome} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  <div key={item.product.id} className="flex gap-4 p-4 bg-gray-800/40 rounded border border-white/5 relative group">
+                    <div className="w-14 h-14 rounded overflow-hidden bg-gray-800 shrink-0">
+                       <img src={item.product.image_url} alt={item.product.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                     </div>
                     <div className="flex-1">
-                      <h4 className="text-sm font-bold text-white uppercase italic tracking-tight">{item.product.nome}</h4>
-                      <p className="text-primary font-bold text-xs mt-1">R$ {(item.product.preco * item.quantity).toFixed(2).replace('.', ',')}</p>
+                      <h4 className="text-[10px] font-bold text-white uppercase italic tracking-widest">{item.product.name}</h4>
+                      <p className="text-amber-500 font-bold text-xs mt-1">R$ {(item.product.price * item.quantity).toFixed(2).replace('.', ',')}</p>
                       <div className="flex items-center gap-4 mt-3">
-                         <button onClick={() => updateQuantity(item.product.id, -1)} className="p-1.5 bg-dark-bg border border-dark-border rounded-lg text-slate-500 hover:text-white"><Minus size={14} /></button>
-                         <span className="text-xs font-bold text-white font-mono">{item.quantity}</span>
-                         <button onClick={() => updateQuantity(item.product.id, 1)} className="p-1.5 bg-dark-bg border border-dark-border rounded-lg text-primary border-primary/20"><Plus size={14} /></button>
+                         <button onClick={() => updateQuantity(item.product.id, -1)} className="p-1.5 bg-gray-900 border border-white/5 rounded text-slate-500 hover:text-white"><Minus size={12} /></button>
+                         <span className="text-[9px] font-bold text-white font-mono">{item.quantity}</span>
+                         <button onClick={() => updateQuantity(item.product.id, 1)} className="p-1.5 bg-gray-900 border border-amber-500/20 rounded text-amber-500"><Plus size={12} /></button>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="p-8 border-t border-dark-border bg-dark-bg/20 space-y-6">
+              <div className="p-6 border-t border-white/5 bg-black/20 space-y-6">
                 <div className="flex justify-between items-center px-2">
-                  <span className="text-slate-500 text-xs font-bold uppercase tracking-widest">Valor Total</span>
-                  <span className="text-2xl font-bold text-white tracking-tighter">R$ {cartTotal.toFixed(2).replace('.', ',')}</span>
+                  <span className="text-slate-600 text-[10px] font-bold uppercase tracking-widest">Montante Total</span>
+                  <span className="text-xl font-bold text-white tracking-tighter italic">R$ {cartTotal.toFixed(2).replace('.', ',')}</span>
                 </div>
                 <button 
                   onClick={handleCheckout}
-                  className="w-full bg-primary text-white py-5 rounded-[24px] font-bold text-xs uppercase tracking-[0.2em] shadow-xl shadow-primary/20 hover:bg-primary-hover flex items-center justify-center gap-3 transition-all active:scale-95"
+                  className="w-full bg-amber-600 text-white py-4 rounded font-bold text-[10px] uppercase tracking-widest shadow-xl shadow-amber-900/20 hover:bg-amber-700 flex items-center justify-center gap-3 transition-all active:scale-95"
                 >
-                  Confirmar Pedido <div className="w-2 h-2 rounded-full bg-white shadow-[0_0_8px_white]" />
+                  Confirmar no WhatsApp <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px_white] animate-pulse" />
                 </button>
               </div>
             </motion.div>

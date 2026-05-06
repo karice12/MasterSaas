@@ -3,13 +3,35 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ShieldCheck, LayoutDashboard, Utensils, Receipt, Settings, ExternalLink, Database, Lock, ArrowRight, Store, X, Zap, Globe, MousePointer2 } from 'lucide-react';
+import { ShieldCheck, LayoutDashboard, Utensils, Receipt, ExternalLink, Database, Lock, ArrowRight, Store, X, Zap, Globe, MousePointer2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import React, { type ReactNode, useState } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
+import React, { type ReactNode, useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate, Navigate, useParams } from 'react-router-dom';
 import MasterDashboard from './components/master/MasterDashboard';
 import CompanyDashboard from './components/company/CompanyDashboard';
 import PublicMenu from './components/public/PublicMenu';
+import { getTenantSlug } from './lib/tenant';
+
+function TenantResolver() {
+  const [slug, setSlug] = useState<string | null>(null);
+  const params = useParams();
+
+  useEffect(() => {
+    const detected = getTenantSlug();
+    if (detected) {
+      setSlug(detected);
+    }
+  }, []);
+
+  // Priority: URL Param > Hostname Slug
+  const finalSlug = params.slug || slug;
+
+  if (finalSlug) {
+    return <PublicMenu overrideSlug={finalSlug} />;
+  }
+
+  return <LandingPage />;
+}
 
 function FeatureCard({ icon, title, description }: { icon: ReactNode, title: string, description: string }) {
   return (
@@ -40,66 +62,67 @@ function AuthScreen({ title, subtitle, icon, onSubmit, password, setPassword, er
 }) {
   return (
     <motion.div 
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 1.05 }}
-      className="min-h-screen flex items-center justify-center p-4 bg-dark-bg"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="min-h-screen flex items-center justify-center p-4 bg-gray-950"
     >
-      <div className="bg-dark-card p-8 rounded-xl border border-dark-border shadow-2xl w-full max-w-md text-center relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
+      <div className="bg-gray-900 p-8 rounded border border-white/5 shadow-2xl w-full max-w-sm relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-amber-600 to-transparent opacity-30" />
         
-        <div className="w-20 h-20 bg-primary/10 text-primary rounded-xl flex items-center justify-center mx-auto mb-6 shadow-inner border border-primary/20">
+        <div className="w-12 h-12 bg-amber-600/10 text-amber-500 rounded border border-amber-600/10 flex items-center justify-center mx-auto mb-6 shadow-xl shadow-amber-900/10">
           {icon}
         </div>
-        <h2 className="text-xl font-bold text-white tracking-tight">{title}</h2>
-        <p className="text-slate-400 mt-2 text-base font-medium">{subtitle}</p>
+        <h2 className="text-sm font-bold text-white tracking-widest uppercase italic">{title}</h2>
+        <p className="text-slate-500 mt-1.5 text-[10px] font-bold uppercase tracking-widest italic opacity-60">{subtitle}</p>
 
-        <form onSubmit={onSubmit} className="mt-8 space-y-6 text-left">
-          <div className="space-y-3">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Chave de Segurança</label>
-            <input 
-              type="password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full bg-dark-bg border border-dark-border rounded-xl py-3.5 px-6 text-white text-center text-lg tracking-[0.5em] font-bold focus:ring-4 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all placeholder:text-slate-700"
-              required
-            />
+        <form onSubmit={onSubmit} className="mt-8 space-y-5 text-left">
+          <div className="space-y-2">
+            <label className="text-[9px] font-bold text-slate-600 uppercase tracking-widest ml-1 italic">Chave de Segurança</label>
+            <div className="relative group">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-amber-500 transition-colors">
+                <Lock size={14} />
+              </div>
+              <input 
+                type="password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="DIGITE SUA SENHA"
+                className="w-full bg-gray-800 border border-white/5 rounded py-2.5 pl-10 pr-4 text-white text-center text-xs tracking-[0.4em] font-bold focus:border-amber-500 focus:outline-none transition-all placeholder:text-gray-700 placeholder:tracking-widest"
+                required
+              />
+            </div>
           </div>
           
           {error && (
             <motion.p 
-              initial={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-red-400 text-[10px] font-bold text-center uppercase tracking-wider"
+              className="text-red-500 text-[8px] font-bold text-center uppercase tracking-widest"
             >
               {error}
             </motion.p>
           )}
 
-          <motion.button 
+          <button 
             type="submit"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="w-full bg-primary text-white py-3.5 rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-primary-hover transition-all flex items-center justify-center gap-3 shadow-xl shadow-primary/20"
+            className="w-full bg-amber-600 text-white py-2.5 rounded font-bold text-[10px] uppercase tracking-widest hover:bg-amber-700 transition-all flex items-center justify-center gap-2 shadow shadow-amber-900/10 mt-2"
           >
-            Acessar Painel
-            <ArrowRight size={20} />
-          </motion.button>
+            Acessar <ArrowRight size={14} />
+          </button>
 
           <button 
             type="button"
             onClick={onBack}
-            className="w-full text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors py-2"
+            className="w-full text-slate-600 text-[8px] font-bold uppercase tracking-widest hover:text-white transition-colors py-2 italic scale-95"
           >
-            Voltar para o Início
+            ← Voltar ao Início
           </button>
         </form>
         
-        <div className="mt-12 pt-8 border-t border-dark-border/50">
-          <p className="text-[10px] text-slate-600 font-bold uppercase tracking-[0.2em] leading-relaxed">
-            Ambiente Seguro • Encriptado
-            <br />© 2026 MenuMaster SaaS
+        <div className="mt-10 pt-6 border-t border-white/5">
+          <p className="text-[7px] text-slate-700 font-bold uppercase tracking-widest text-center">
+            Node: Security-Alpha-Active • © 2026 MenuMaster
           </p>
         </div>
       </div>
@@ -269,10 +292,10 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<TenantResolver />} />
         <Route path="/admin-master" element={<MasterRouter />} />
         <Route path="/admin" element={<CompanyRouter />} />
-        <Route path="/menu/:slug" element={<PublicMenu />} />
+        <Route path="/menu/:slug" element={<TenantResolver />} />
         <Route path="/menu" element={<Navigate to="/menu/demo" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
